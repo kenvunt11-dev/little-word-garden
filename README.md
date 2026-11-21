@@ -50,3 +50,12 @@ Open http://localhost:5200
 
 ## iPad
 Open the GitHub Pages link in Safari → Share → **Add to Home Screen**. Turn off silent mode so Miss Bloom can talk.
+
+## Miss Bloom's voice (`voice/`)
+Every phrase Miss Bloom says is a pre-made MP3 clip (natural Kokoro voice `af_heart`, free and offline), named by a hash of the text.
+If a phrase has no clip, the device voice reads that line instead (the speaker button on the map switches between "Miss Bloom (tự nhiên)" and device voices).
+
+After adding or changing words/lessons, remake the clips (only new phrases are generated):
+1. Open the app in Chrome, console: `copy(JSON.stringify(__lwg.allLines()))`, paste into `../voice-tools/lines.json`
+2. `cd ../voice-tools` then `.venv\Scripts\python make_voice.py build lines.json ..\kids-english-garden\voice`
+3. Bump the cache name in `sw.js`, commit `voice/`.

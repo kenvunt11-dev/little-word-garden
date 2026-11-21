@@ -302,11 +302,30 @@ function pickVoice() {
   voice = (saved && vs.find(v => v.name === saved)) || vs[0] || null;
 }
 if ('speechSynthesis' in window) { speechSynthesis.onvoiceschanged = pickVoice; pickVoice(); }
+/* natural voice: pre-made clips in voice/<fnv32 of phrase>.mp3 (made with Kokoro, see voice-tools/make_voice.py).
+   Each phrase of a line is one clip; if any phrase has no clip, the device voice reads the line instead. */
+const splitParts = text => text.split(/\.\.\.\s*|(?<=[!?.,])\s+/).map(p => p.replace(/\s+/g, ' ').trim()).filter(Boolean);
+function fnv(s) { let h = 0x811c9dc5; for (const b of new TextEncoder().encode(s)) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); }
+let CLIPS = null, useClips = store.get('voice', '__clips') === '__clips';
+fetch('voice/index.json').then(r => (r.ok ? r.json() : null)).then(j => { if (j) CLIPS = new Set(j.clips); }).catch(() => {});
+const clipBuf = new Map();
+function loadClip(h) {
+  if (!clipBuf.has(h)) {
+    const p = fetch('voice/' + h + '.mp3').then(r => { if (!r.ok) throw new Error('clip'); return r.arrayBuffer(); })
+      .then(b => new Promise((res, rej) => AC.decodeAudioData(b, res, rej)));
+    p.catch(() => clipBuf.delete(h)); clipBuf.set(h, p);
+  }
+  return clipBuf.get(h);
+}
+const hasClips = parts => useClips && CLIPS && AC && parts.every(p => CLIPS.has(fnv(p)));
+
 $('#voiceBtn').addEventListener('click', () => {
   unlockAudio();
-  const vs = rankedVoices().slice(0, 8); if (!vs.length) { toast('Máy chưa có giọng tiếng Anh.'); return; }
-  const i = (vs.findIndex(v => v === voice) + 1) % vs.length; voice = vs[i]; store.set('voice', voice.name);
-  toast('Giọng: ' + voice.name + ' (' + (i + 1) + '/' + vs.length + ')');
+  const opts = [null, ...rankedVoices().slice(0, 8)]; // null = Miss Bloom's natural voice
+  const cur = useClips ? 0 : Math.max(0, opts.indexOf(voice));
+  const i = (cur + 1) % opts.length;
+  if (i === 0) { useClips = true; store.set('voice', '__clips'); toast('Giọng: Miss Bloom (tự nhiên)'); }
+  else { useClips = false; voice = opts[i]; store.set('voice', voice.name); toast('Giọng máy: ' + voice.name + ' (' + i + '/' + (opts.length - 1) + ')'); }
   say("Hi friend! I'm Miss Bloom!").catch(() => {});
 });
 
@@ -326,10 +345,29 @@ function say(text, { rate = 0.8, pitch = 1.18, remember = false } = {}) {
       bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 4000);
       done();
     };
-    h.cleanup = () => { fin = true; clearTimeout(timer); clearTimeout(gap); teacher.classList.remove('talking'); };
+    let src = null;
+    h.cleanup = () => { fin = true; clearTimeout(timer); clearTimeout(gap); teacher.classList.remove('talking'); try { src && src.stop(); } catch (e) {} };
+    const parts = splitParts(text);
+    if (hasClips(parts)) {
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (AC.state === 'suspended') AC.resume();
+      const bufs = parts.map(p => loadClip(fnv(p))); // start all downloads at once
+      (async () => {
+        for (let k = 0; k < parts.length; k++) {
+          let buf; try { buf = await bufs[k]; } catch (e) { continue; }
+          if (fin) return;
+          await new Promise(r => { src = AC.createBufferSource(); src.buffer = buf; src.connect(AC.destination); src.onended = r; src.start(); });
+          if (fin) return;
+          await new Promise(r => { gap = setTimeout(r, /[.!?]$/.test(parts[k]) ? 170 : 70); });
+        }
+        end();
+      })();
+      timer = setTimeout(end, 5000 + text.length * 150);
+      return;
+    }
+    if (useClips && CLIPS) console.warn('[voice] no clip for:', parts.filter(p => !CLIPS.has(fnv(p))));
     if (!('speechSynthesis' in window)) { timer = setTimeout(end, 700 + text.length * 70); return; }
     speechSynthesis.cancel();
-    const parts = text.split(/\.\.\.\s*|(?<=[!?.,])\s+/).map(p => p.trim()).filter(Boolean);
     let i = 0;
     const next = () => {
       if (fin) return;
@@ -344,7 +382,7 @@ function say(text, { rate = 0.8, pitch = 1.18, remember = false } = {}) {
     next();
   });
 }
-teacher.addEventListener('click', () => { if (lastLine && !speechSynthesis.speaking) say(lastLine).catch(() => {}); });
+teacher.addEventListener('click', () => { if (lastLine && !teacher.classList.contains('talking')) say(lastLine).catch(() => {}); });
 
 /* ---------- microphone (optional) ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -919,8 +957,36 @@ $('#play').addEventListener('click', async () => {
     await say(Object.keys(done).length ? "I missed you!... Tap the shiny one!" : "Are you ready to learn?... Let's go! Tap the shiny one!", { remember: true });
   } catch (e) {}
 });
+// every phrase Miss Bloom can say (for voice-tools/make_voice.py). Keep in sync when adding new say() lines.
+function allLines() {
+  const out = [];
+  const add = (...t) => out.push(...t);
+  add(...PRAISE, "Hi friend! I'm Miss Bloom!", 'Butterfly!', "Let's finish the shiny one first!", 'Where shall we go next?', 'Tap the shiny one!',
+    "Let's play again!", "Ooh, look!... Let's listen and point!", "Look!... Let's point and say!", 'Now you!... Tap and listen!',
+    'Wow! Yay! Yes! I heard you! Great talking!', 'Oops! Try again!', "Let's try again!", 'Look! Your caterpillar is a butterfly now!',
+    'I missed you!... Tap the shiny one!', "Are you ready to learn?... Let's go! Tap the shiny one!",
+    "Hi friend!... Let's add!... Count with me!", "Hi friend!... Let's take away!... Count with me!", 'Catch the answer!', 'Say it!');
+  for (const id of Object.keys(WORDS)) {
+    const n = W(id).name;
+    add(P.intro(id), P.ask(id), P.that(id), P.catch(id), P.got(id), `Tap the ${n}!`, cap(n) + '!', `Can you point to the ${n}?... Tap it!`,
+      `Can you say ${n}?... ${cap(n)}.`, `${cap(n)}! Good talking!`);
+  }
+  for (const L of LESSONS) {
+    add(`Hi friend!... Today we're learning... ${L.title}! Let's go!`, `Yay! You did it!... You finished ${L.title}! Here's your sticker!`);
+    if (L.type !== 'math') continue;
+    const T = L.thing, plus = L.op === '+', opWord = plus ? 'plus' : 'take away';
+    for (let a = 1; a <= 5; a++) for (let b = 1; b <= 5; b++) {
+      const r = plus ? a + b : a - b; if (r < 1 || r > 5) continue;
+      const sent = `${cap(NUM[a])} ${opWord} ${NUM[b]} is ${NUM[r]}.`, q = `${cap(NUM[a])} ${opWord} ${NUM[b]} is...?`;
+      add(`${cap(NUM[a])} ${plural(a, T)}.`, plus ? `Plus ${NUM[b]} ${plural(b, T)}.` : `Take away ${NUM[b]}.`, `${cap(NUM[r])} ${plural(r, T)}! ${sent}`,
+        q, `Hmm, let's count again! ${q}`, `${cap(NUM[a])} ${opWord} ${NUM[b]}... Catch the answer!`, `${q} Say it!`, `${cap(NUM[r])}! ${sent}`);
+    }
+    for (let n = 1; n <= 5; n++) add(`That's ${NUM[n]}. Let's count again!`);
+  }
+  return [...new Set(out.flatMap(splitParts))];
+}
 // test hook (used by the automatic checker only)
-window.__lwg = { LESSONS, runLesson, showMap, get stats() { return stats; } };
+window.__lwg = { LESSONS, runLesson, showMap, allLines, get stats() { return stats; }, get clips() { return CLIPS ? CLIPS.size : 0; } };
 })();
 </script>
 </body>
