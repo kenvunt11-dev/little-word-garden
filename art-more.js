@@ -212,3 +212,49 @@
   ART.addItems(Object.assign({}, P, I));
   ART.person = person;
 })();
+
+/* ---------- AI picture-book bitmaps (img/) ----------
+ * Add a name to IMG once its file exists in img/; anything not listed keeps its SVG drawing.
+ * Every function still returns an "<svg ...>" string, so ART.group / cards / floaters work unchanged. */
+(function () {
+  'use strict';
+  const IMG = {
+    items: ['apple', 'boy', 'girl', 'baby', 'book', 'pencil', 'crayon'], // img/<kind>.webp          512x512, transparent
+    bugs: [],                  // img/bug-<kind>.webp      bee ladybug snail caterpillar dragonfly (facing right)
+    butterflies: [],           // img/bug-butterfly-<color>.webp  color names from BCOL below
+    teacher: true,             // img/teacher.webp + img/teacher-talk.webp (600x818, feet at the bottom)
+    scenes: [],                // img/scene-<name>.webp    1600 wide, 400:260
+  };
+  const BCOL = { red: '#ec4b3c', yellow: '#f6c12a', blue: '#4b9be3', pink: '#f383b0', green: '#5cbf4a', purple: '#9b6bd6', orange: '#f28a2b' };
+  const pic = (href, vb = '0 0 100 100', w = 100, h = 100, ar = 'xMidYMid meet', extra = '') =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}"${extra}><image class="lw-bmp" href="${href}" width="${w}" height="${h}" preserveAspectRatio="${ar}"/></svg>`;
+  const has = (list, k) => list.indexOf(k) >= 0;
+  const rgb = h => { h = String(h || '').replace('#', ''); const n = parseInt(h.length === 3 ? h.replace(/./g, '$&$&') : h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const near = hex => { // closest available butterfly colour, or null when nothing is close
+    const c = rgb(hex); let best = null, bd = 1e9;
+    IMG.butterflies.forEach(name => { const d = rgb(BCOL[name]).reduce((s, v, i) => s + (v - c[i]) ** 2, 0); if (d < bd) { bd = d; best = name; } });
+    return bd < 60 ** 2 ? best : null;
+  };
+
+  const item0 = ART.item, bug0 = ART.bug, teacher0 = ART.teacher, scene0 = ART.scene;
+  ART.item = kind => has(IMG.items, kind) ? pic(`img/${kind}.webp`) : item0(kind);
+  ART.bug = (kind, color) => {
+    if (kind === 'butterfly') { const n = near(color || BCOL.pink); return n ? pic(`img/bug-butterfly-${n}.webp`).replace('class="lw-bmp"', 'class="lw-bmp lw-flap"') : bug0(kind, color); }
+    return has(IMG.bugs, kind) ? pic(`img/bug-${kind}.webp`).replace('class="lw-bmp"', 'class="lw-bmp lw-wob"') : bug0(kind, color);
+  };
+  ART.teacher = () => IMG.teacher
+    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 300" overflow="visible"><g class="mb-head"><image href="img/teacher.webp" width="220" height="300"/><g class="mouth-closed"></g><image class="mouth-open lw-talkimg" href="img/teacher-talk.webp" width="220" height="300"/></g></svg>`
+    : teacher0();
+  if (scene0) ART.scene = name => has(IMG.scenes, name) ? pic(`img/scene-${name}.webp`, '0 0 400 260', 400, 260, 'xMidYMid slice', ' preserveAspectRatio="xMidYMid slice"') : scene0(name);
+  ART.css += `
+.lw-flap{transform-box:fill-box;transform-origin:center;animation:lwFlapImg .45s ease-in-out infinite alternate}
+@keyframes lwFlapImg{from{transform:scaleX(1)}to{transform:scaleX(.72)}}
+.lw-wob{transform-box:fill-box;transform-origin:50% 90%;animation:lwWobImg 1.4s ease-in-out infinite alternate}
+@keyframes lwWobImg{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+.talking .lw-talkimg{animation:lwTalkImg .32s steps(1) infinite}
+@keyframes lwTalkImg{0%{opacity:1}50%{opacity:0}}
+.listening .mb-head{transform-origin:110px 290px}
+@media (prefers-reduced-motion:reduce){.lw-flap,.lw-wob{animation:none}}
+`;
+  ART.IMG = IMG;
+})();

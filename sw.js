@@ -1,5 +1,5 @@
 // Network-first for our own files (updates show up right away), cache fallback for offline play.
-const CACHE = 'lwg-v6';
+const CACHE = 'lwg-v7';
 const CORE = ['./', 'index.html', 'art.js', 'art-items.js', 'art-more.js', 'lessons.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
