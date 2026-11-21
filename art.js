@@ -37,39 +37,6 @@
   const smile = (x, y, w, col = '#6b2b22', sw = 1.6) => `<path d="M${f(x - w)} ${y}Q${x} ${f(y + w * .9)} ${f(x + w)} ${y}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`;
   const leaf = (x, y, a, l, c, rib) => { const w = l * .32; return `<path d="M0 0Q${f(w)} ${f(-l * .45)} 0 ${f(-l)}Q${f(-w)} ${f(-l * .45)} 0 0Z" fill="${c}" transform="translate(${f(x)} ${f(y)}) rotate(${f(a)})"/>` + (rib ? `<path d="M0 -1L0 ${f(-l * .8)}" stroke="${rib}" stroke-width=".8" opacity=".6" transform="translate(${f(x)} ${f(y)}) rotate(${f(a)})"/>` : ''); };
 
-  /* swaying sprig: thin curved stem with alternating almond leaves */
-  const PAL = ['#e0533d', '#f39237', '#f6c945', '#a6d14a', '#3f7d3a'];
-  function sprig(x, y, h, lean, r, o = {}) {
-    const n = o.n || 6, L = o.leaf || 14, pal = o.pal || PAL;
-    const cx = x + lean * .15, cy = y - h * .55, ex = x + lean, ey = y - h;
-    let s = `<path d="M${f(x)} ${f(y)}Q${f(cx)} ${f(cy)} ${f(ex)} ${f(ey)}" fill="none" stroke="${o.stem || '#6b7f3a'}" stroke-width="${o.sw || 1.6}" stroke-linecap="round"/>`;
-    for (let i = 1; i <= n; i++) {
-      const t = .22 + .78 * i / (n + 1), u = 1 - t;
-      const px = u * u * x + 2 * u * t * cx + t * t * ex, py = u * u * y + 2 * u * t * cy + t * t * ey;
-      const dx = 2 * u * (cx - x) + 2 * t * (ex - cx), dy = 2 * u * (cy - y) + 2 * t * (ey - cy);
-      const a = Math.atan2(dy, dx) * 180 / Math.PI + 90, side = i % 2 ? 1 : -1;
-      s += leaf(px, py, a + side * (38 + r() * 18), L * (1.05 - .35 * t) * (.85 + r() * .3), pal[Math.floor(r() * pal.length)]);
-    }
-    const ta = Math.atan2(ey - cy, ex - cx) * 180 / Math.PI + 90;
-    s += leaf(ex, ey, ta, L * .8, pal[Math.floor(r() * pal.length)]);
-    return `<g class="lw-sway" style="animation-delay:-${f(r() * 4)}s;animation-duration:${f(3.4 + r() * 2.4)}s">${s}</g>`;
-  }
-  /* lumpy bush built from overlapping circles + leaf texture */
-  function bush(cx, by, w, h, fill, r, tex) {
-    const k = Math.max(4, Math.round(w / (h * .55)));
-    let s = `<rect x="${f(cx - w / 2)}" y="${f(by - h * .42)}" width="${f(w)}" height="${f(h * .42 + 80)}" rx="${f(h * .3)}" fill="${fill}"/>`;
-    for (let j = 0; j < k; j++) {
-      const u = (j + .5) / k, rr = h * (.3 + r() * .14);
-      const top = by - h * (.5 + .5 * Math.sin(Math.PI * u));
-      s += `<circle cx="${f(cx - w / 2 + u * w)}" cy="${f(top + rr)}" r="${f(rr)}" fill="${fill}"/>`;
-    }
-    for (let j = 0; j < (tex ? k * 3 : 0); j++) {
-      const u = r(); const top = by - h * (.5 + .5 * Math.sin(Math.PI * u));
-      s += leaf(cx - w / 2 + u * w, top + h * (.2 + r() * .5), r() * 360, h * .16, tex[j % tex.length]);
-    }
-    return s;
-  }
-
   /* ---------- CSS ---------- */
   const css = `
 .mouth-open{display:none}
@@ -114,11 +81,13 @@
 @keyframes lwSquish{from{transform:scaleX(1)}to{transform:scaleX(1.05)}}
 .lw-sway{transform-box:fill-box;transform-origin:50% 100%;animation:lwSway 4s ease-in-out infinite alternate}
 @keyframes lwSway{from{transform:rotate(-3deg)}to{transform:rotate(3.5deg)}}
-.lw-dec{position:absolute;width:20vmin;height:20vmin;transform-origin:50% 100%;pointer-events:none}
-.lw-dec svg{width:100%;height:100%;overflow:visible}
+.lw-sky{position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 78% 8%,rgba(255,255,255,.35),transparent 70%),linear-gradient(180deg,#56b2e3 0%,#78c4eb 42%,#b2e0f3 74%,#dcf1ee 100%)}
+.lw-cloud{position:absolute;animation:lwDrift 80s ease-in-out infinite alternate}
+.lw-cloud svg{display:block;width:100%;height:auto}
+@keyframes lwDrift{from{transform:translateX(-2vw)}to{transform:translateX(5vw)}}
 .co-swing{transform-box:fill-box;transform-origin:50% 0;animation:lwSwing 3s ease-in-out infinite alternate}
 @keyframes lwSwing{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
-@media (prefers-reduced-motion:reduce){.lw-sway,.bf-w,.bz-w,.df-w,.cp-seg,.mb-wing,.co-swing,.sn-stalk,.sn-body,.lb-legs{animation:none}}
+@media (prefers-reduced-motion:reduce){.lw-sway,.bf-w,.bz-w,.df-w,.cp-seg,.mb-wing,.co-swing,.lw-cloud,.sn-stalk,.sn-body,.lb-legs{animation:none}}
 `;
 
   /* ---------- Miss Bloom ---------- */
@@ -281,54 +250,96 @@
     },
   };
 
-  /* ---------- foliage ---------- */
+  /* ---------- painterly meadow + sky ---------- */
+  // rough "brush" edge: displace shapes with soft noise (only on static shapes, never animated ones)
+  const paint = (id, freq = .04, scale = 5) => `<filter id="${id}" x="-8%" y="-8%" width="116%" height="116%"><feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="${scale}"/></filter>`;
+  const hillY = x => 114 - 34 * Math.sin(Math.PI * (x + 80) / 1000);
+  const TINY = ['#5b8fd9', '#7fa6f0', '#4aa7c9', '#f08fb0', '#b48ce0', '#3fb0a0'];
+  const BLADE = ['#2e8f7a', '#3fa36c', '#1f6f5e', '#5bb37a', '#2a7f8f'];
+  const tiny = (x, y, s, c) => { // little 4-petal meadow flower
+    let p = ''; for (let i = 0; i < 4; i++) p += `<ellipse cy="${f(-s * .55)}" rx="${f(s * .34)}" ry="${f(s * .55)}" transform="rotate(${i * 90 + 20})"/>`;
+    return `<g transform="translate(${f(x)} ${f(y)}) scale(1 .8)" fill="${c}">${p}<circle r="${f(s * .22)}" fill="#fff3b0"/></g>`;
+  };
+  const frill = (R, cy = 0, n = 16, k = .62, r = () => .5) => { let d = ''; for (let i = 0; i < n * 2; i++) { const a = i * Math.PI / n, q = i % 2 ? R * k : R * (.9 + r() * .18); d += (i ? 'L' : 'M') + f(q * Math.cos(a)) + ' ' + f(cy + q * Math.sin(a) * .8); } return d + 'Z'; };
+  function dandelion(x, y, h, r, s = 1, col = '#f7d23a') {
+    const lean = (r() - .5) * 14, tx = x + lean, ty = y - h, R = 9 * s;
+    return `<g class="lw-sway" style="animation-delay:-${f(r() * 4)}s;animation-duration:${f(3 + r() * 2)}s"><path d="M${f(x)} ${f(y)}Q${f(x + lean * .2)} ${f(y - h * .5)} ${f(tx)} ${f(ty)}" stroke="#3f8f4a" stroke-width="${f(2 * s)}" fill="none" stroke-linecap="round"/>`
+      + `<g transform="translate(${f(tx)} ${f(ty)})"><path d="${frill(R, 0, 16, .62, r)}" fill="${col}" stroke="${dark(col, .2)}" stroke-width=".8" stroke-linejoin="round"/><path d="${frill(R * .6, -1, 11, .6, r)}" fill="${light(col, .3)}"/><ellipse cy="-.5" rx="${f(R * .26)}" ry="${f(R * .18)}" fill="${dark(col, .15)}"/></g></g>`;
+  }
+  function blades(x, y, h, r, n = 4) {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      const bx = x + (i - n / 2) * 5 + r() * 4, hh = h * (.6 + r() * .5), lean = (i - n / 2 + .5) * h * .18 + (r() - .5) * 10, w = 3.5 + r() * 3, c = BLADE[Math.floor(r() * BLADE.length)];
+      const tx = bx + lean, ty = y - hh;
+      s += `<path d="M${f(bx - w)} ${y}Q${f(bx - w * .3 + lean * .3)} ${f(y - hh * .55)} ${f(tx)} ${f(ty)}Q${f(bx + w * .6 + lean * .35)} ${f(y - hh * .5)} ${f(bx + w)} ${y}Z" fill="${c}"/><path d="M${f(bx)} ${y}Q${f(bx + lean * .32)} ${f(y - hh * .5)} ${f(tx)} ${f(ty)}" stroke="${light(c, .35)}" stroke-width=".9" fill="none" opacity=".7"/>`;
+    }
+    return `<g class="lw-sway" style="animation-delay:-${f(r() * 4)}s;animation-duration:${f(3.5 + r() * 2)}s">${s}</g>`;
+  }
+  const speckles = (r, n, yAt, yMax) => {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      const x = r() * 1000, y0 = yAt(x) + 6, y = y0 + r() * (yMax - y0), k = r();
+      s += k < .45 ? tiny(x, y, 3.4 + r() * 3.4, TINY[Math.floor(r() * TINY.length)])
+        : k < .75 ? `<path d="M${f(x - 4)} ${f(y)}l2-7M${f(x)} ${f(y)}v-9M${f(x + 4)} ${f(y)}l-2-7" stroke="#6faa36" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".8"/>`
+        : `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(5 + r() * 9)}" ry="${f(1.4 + r() * 1.4)}" fill="#e4f39a" opacity=".65"/>`;
+    }
+    return s;
+  };
   function foliageBack() {
-    const r = rng(7), g = uid('fb'), b1 = g + 'a', b2 = g + 'b', hz = g + 'h';
-    let sp = '';
-    for (let i = 0; i < 16; i++) { const x = 20 + i * 62 + r() * 30; sp += sprig(x, 230, 70 + r() * 80, (r() - .5) * 60, r, { n: 6 + Math.floor(r() * 3), leaf: 14 + r() * 6 }); }
-    let far = '', mid = '';
-    [[60, 170], [230, 150], [420, 165], [600, 150], [790, 170], [960, 155]].forEach(([x, h]) => { far += bush(x, 228, 230, h * .7, `url(#${b1})`, r); });
-    [[150, 110], [520, 100], [880, 120]].forEach(([x, h]) => { mid += bush(x, 240, 220, h, `url(#${b2})`, r, ['#4f8f3f', '#8cc35a', '#e5a03a']); });
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 260" preserveAspectRatio="xMidYMax slice"><defs>${lin(b1, '#a9d38a', '#77ad5d')}${lin(b2, '#7fbf5f', '#3f8445')}${lin(hz, '#d6ecc0', '#b5d79b')}</defs>
-      <path d="M0 260V170Q120 130 260 160T560 150T820 158T1000 150V260Z" fill="url(#${hz})"/>
-      ${far}${sp}${mid}
-      <path d="M0 260V238Q250 226 500 236T1000 232V260Z" fill="#3f8445"/></svg>`;
+    const r = rng(7), g = uid('fb'), hl = g + 'h', far = g + 'f', pf = g + 'p';
+    let d = 'M0 260V' + f(hillY(0)), crest = 'M0 ' + f(hillY(0) + 5);
+    for (let x = 20; x <= 1000; x += 20) { d += 'L' + x + ' ' + f(hillY(x)); crest += 'L' + x + ' ' + f(hillY(x) + 5); }
+    d += 'V260Z';
+    let bl = '';
+    for (let i = 0; i < 15; i++) { const x = i * 72 + r() * 30; bl += `<circle cx="${f(x)}" cy="${f(hillY(x) + 6)}" r="${f(12 + r() * 22)}" fill="${['#7fbf5a', '#94c95a', '#6aae55', '#a9d36a', '#5fa65a'][i % 5]}"/>`; }
+    let fl = '';
+    for (let i = 0; i < 10; i++) { const x = 30 + i * 105 + r() * 40; fl += dandelion(x, hillY(x) + 34 + r() * 24, 20 + r() * 14, r, .65); }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 260" preserveAspectRatio="xMidYMax slice"><defs>${lin(hl, '#d2e86c', '#86bf3c')}${lin(far, '#c6e396', '#9ccd6c')}${paint(pf)}</defs>
+      <g filter="url(#${pf})"><path d="M0 260V150Q140 112 300 134T620 118T1000 104V260Z" fill="url(#${far})"/>${bl}<path d="M560 260Q760 66 1000 84V260Z" fill="#d6ea78"/><path d="M700 140Q840 84 1000 92" stroke="#eef7a8" stroke-width="5" fill="none" opacity=".8"/><path d="${d}" fill="url(#${hl})"/></g>
+      <path d="${crest}" stroke="#ecf6a6" stroke-width="5" fill="none" opacity=".75" stroke-linecap="round" stroke-dasharray="40 14 70 10"/>
+      ${speckles(r, 160, hillY, 258)}${fl}</svg>`;
   }
   function foliageFront() {
-    const r = rng(23), g = uid('ff'), b1 = g + 'a', gr = g + 'g';
-    let tufts = '';
-    for (let x = 6; x < 1000; x += 18 + r() * 16) {
-      const h = (x < 340 ? 10 : 14) + r() * 10, y = 196;
-      tufts += `<path d="M${f(x - 6)} ${y}Q${f(x - 4)} ${f(y - h * .6)} ${f(x - 8)} ${f(y - h)}Q${f(x)} ${f(y - h * .5)} ${f(x + 1)} ${y}Q${f(x + 2)} ${f(y - h * .7)} ${f(x + 7)} ${f(y - h * .9)}Q${f(x + 5)} ${f(y - h * .3)} ${f(x + 7)} ${y}Z" fill="${r() > .5 ? '#2f6e37' : '#3f8a44'}"/>`;
+    const r = rng(23), g = uid('ff'), gr = g + 'g', pf = g + 'p';
+    const bandY = x => 172 - 6 * Math.sin(x / 130);
+    let band = 'M0 200V' + f(bandY(0));
+    for (let x = 25; x <= 1000; x += 25) band += 'L' + x + ' ' + f(bandY(x));
+    band += 'V200Z';
+    let clumps = '';
+    for (let x = 8; x < 1010; x += 24 + r() * 28) {
+      const left = x < 330, h = left ? 14 + r() * 10 : x < 600 ? 28 + r() * 26 : 46 + r() * 50;
+      clumps += blades(x, 202, h, r, left ? 3 : 4 + Math.floor(r() * 3));
+      if (!left && r() < .6) clumps += dandelion(x + 8, 202, h * (.85 + r() * .4), r, 1.25 + r() * .8);
+      else if (left && r() < .35) clumps += dandelion(x + 6, 202, 20 + r() * 6, r, .7);
+      if (!left && r() < .4) { const bx = x - 8, bh = h * (.5 + r() * .4); clumps += `<g class="lw-sway" style="animation-delay:-${f(r() * 4)}s"><path d="M${f(bx)} 202Q${f(bx - 3)} ${f(202 - bh / 2)} ${f(bx - 2)} ${f(202 - bh)}" stroke="#2e8f7a" stroke-width="1.6" fill="none"/>${tiny(bx - 2, 202 - bh, 9, TINY[Math.floor(r() * 3)])}</g>`; }
     }
-    let big = '', sp = '';
-    [[690, 95], [860, 125], [985, 110]].forEach(([x, h], i) => { big += bush(x, 205, 220 - i * 20, h, `url(#${b1})`, r, ['#1f5a2e', '#4f9445', '#2b6b36']); });
-    [[700, 110, -10], [770, 90, 20], [900, 120, 10], [960, 95, -25], [820, 70, 12], [600, 60, -8], [520, 45, 10]].forEach(([x, h, l]) => { sp += sprig(x, 200 - h * .4, h, l, r, { n: 5 + Math.floor(r() * 3), leaf: 15 }); });
-    [[130, 28, 6], [250, 34, -6], [40, 24, 4]].forEach(([x, h, l]) => { sp += sprig(x, 196, h, l, r, { n: 4, leaf: 9 }); });
-    const small = bush(470, 205, 140, 52, `url(#${b1})`, r, ['#4f9445']);
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMax slice"><defs>${lin(b1, '#5aa04c', '#1f5a2e')}${lin(gr, '#58a04a', '#2b6b36')}</defs>
-      ${sp}${big}${small}
-      <path d="M0 200V182Q160 170 330 178T640 176T1000 178V200Z" fill="url(#${gr})"/>
-      ${tufts}
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMax slice"><defs>${lin(gr, '#9ad450', '#4f9a3a')}${paint(pf, .05, 4)}</defs>
+      <g filter="url(#${pf})"><path d="${band}" fill="url(#${gr})"/></g>
+      ${speckles(r, 36, bandY, 198)}${clumps}
       <g id="flowerBed"></g></svg>`;
   }
   function flower(c) {
     c = c || '#ff8fb1';
-    const d = dark(c, .22), l = light(c, .45);
-    let p = '';
-    for (let i = 0; i < 5; i++) p += `<g transform="rotate(${i * 72} 0 -56)"><ellipse cx="0" cy="-66" rx="7.2" ry="10" fill="${c}" stroke="${d}" stroke-width="1"/><ellipse cx="0" cy="-68" rx="3.4" ry="5.6" fill="${l}" opacity=".8"/></g>`;
-    return `<g class="lw-flower"><path d="M0 0Q-4 -26 0 -50" stroke="#4f8f3f" stroke-width="3" fill="none" stroke-linecap="round"/>
-      ${leaf(-1, -14, -55, 18, '#6fb24a', '#c9ec9c')}${leaf(-1, -28, 50, 15, '#86c45a', '#d6f2b0')}
-      ${p}<circle cy="-56" r="7" fill="#f6c945" stroke="#e39a23" stroke-width="1"/>
-      <circle cx="-2.4" cy="-57.5" r="1.1" fill="#5b3a1a"/><circle cx="2.4" cy="-57.5" r="1.1" fill="#5b3a1a"/>${smile(0, -54.6, 1.8, '#5b3a1a', 1)}</g>`;
+    return `<g class="lw-flower"><path d="M-1 0Q-15 -12 -21 -30Q-7 -20 2 0Z" fill="#2e8f7a"/><path d="M1 0Q13 -10 19 -26Q8 -15 -1 0Z" fill="#3fa36c"/>
+      <path d="M0 0Q-4 -26 0 -50" stroke="#3f8f4a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <g transform="translate(0 -56)"><path d="${frill(13, 0, 14, .58)}" fill="${c}" stroke="${dark(c, .22)}" stroke-width="1.1" stroke-linejoin="round"/>
+      <path d="${frill(8, -1, 10, .58)}" fill="${light(c, .4)}"/><ellipse cy="-1" rx="3.8" ry="3" fill="#f6c945" stroke="#e39a23" stroke-width=".8"/></g></g>`;
+  }
+  function cloud(r, id) {
+    const n = 5 + Math.floor(r() * 3);
+    let base = '', strokes = '';
+    for (let i = 0; i < n; i++) { const x = 40 + i * (220 / (n - 1)), y = 76 - Math.sin(Math.PI * i / (n - 1)) * 26 + (r() - .5) * 10; base += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(22 + r() * 16)}"/>`; }
+    for (let i = 0; i < 8; i++) {
+      const x = 36 + r() * 190, y = 46 + r() * 50, w = 30 + r() * 60;
+      strokes += `<path d="M${f(x)} ${f(y)}c${f(w * .3)} ${f(-14 - r() * 10)} ${f(w * .8)} -10 ${f(w)} 2c${f(-w * .2)} 10 ${f(-w * .6)} 8 ${f(-w * .5)} -2" stroke="${i % 3 ? '#ffffff' : '#f1f7fb'}" stroke-width="${f(4 + r() * 6)}" fill="none" stroke-linecap="round" opacity="${i % 3 ? .95 : .75}"/>`;
+    }
+    return svg('0 0 300 130', `<defs>${paint(id, .025, 12)}</defs><g filter="url(#${id})"><g fill="#d9ebf6" transform="translate(4 8)">${base}<rect x="30" y="78" width="230" height="24" rx="12"/></g><g fill="#fdfeff">${base}<rect x="30" y="78" width="230" height="24" rx="12"/></g>${strokes}</g>`, 'aria-hidden="true" overflow="visible"');
   }
   function decor() {
-    const r = rng(41);
-    const piece = (pos, rot, pal) => `<div class="lw-dec" style="${pos};transform:rotate(${rot}deg)">${svg('0 0 100 100', sprig(50, 100, 88, (r() - .5) * 26, r, { n: 7, leaf: 17, pal, sw: 2 }) + sprig(50, 100, 60, 18, r, { n: 4, leaf: 13, pal, sw: 1.6 }), 'aria-hidden="true"')}</div>`;
-    return piece('left:-10vmin;top:-20vmin', 140, ['#e0533d', '#f39237', '#f6c945', '#a6d14a'])
-      + piece('left:calc(100% - 10vmin);top:-20vmin', -140, ['#f6c945', '#a6d14a', '#3f7d3a', '#f39237'])
-      + piece('left:-10vmin;top:calc(48% - 20vmin);width:16vmin;height:16vmin', 70, ['#a6d14a', '#3f7d3a', '#f39237'])
-      + piece('left:calc(100% - 8vmin);top:calc(42% - 16vmin);width:16vmin;height:16vmin', -70, ['#e0533d', '#a6d14a', '#3f7d3a']);
+    const r = rng(41), g = uid('sk');
+    const sky = '<div class="lw-sky"></div>';
+    const spots = [['-3vw', '3vh', '44vw', 80], ['52vw', '7vh', '46vw', 95], ['-6vw', '30vh', '30vw', 70], ['64vw', '33vh', '34vw', 85], ['30vw', '20vh', '22vw', 110], ['40vw', '52vh', '66vw', 120], ['-14vw', '58vh', '44vw', 100]];
+    return sky + spots.map(([l, t, w, dur], i) => `<div class="lw-cloud" style="left:${l};top:${t};width:${w};animation-duration:${dur}s;animation-delay:-${i * 13}s">${cloud(r, g + 'c' + i)}</div>`).join('');
   }
   function net() {
     const g = uid('nt'), cl = g + 'c', wd = g + 'w', ms = g + 'm';
