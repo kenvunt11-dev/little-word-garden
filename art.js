@@ -81,7 +81,7 @@
 @keyframes lwSquish{from{transform:scaleX(1)}to{transform:scaleX(1.05)}}
 .lw-sway{transform-box:fill-box;transform-origin:50% 100%;animation:lwSway 4s ease-in-out infinite alternate}
 @keyframes lwSway{from{transform:rotate(-3deg)}to{transform:rotate(3.5deg)}}
-.lw-sky{position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 78% 8%,rgba(255,255,255,.35),transparent 70%),linear-gradient(180deg,#56b2e3 0%,#78c4eb 42%,#b2e0f3 74%,#dcf1ee 100%)}
+.lw-sky{position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 78% 8%,rgba(255,255,255,.35),transparent 70%),linear-gradient(180deg,#4aa6e0 0%,#6dbbea 45%,#a6d8f1 75%,#d6eef0 100%)}
 .lw-cloud{position:absolute;animation:lwDrift 80s ease-in-out infinite alternate}
 .lw-cloud svg{display:block;width:100%;height:auto}
 @keyframes lwDrift{from{transform:translateX(-2vw)}to{transform:translateX(5vw)}}
@@ -329,16 +329,16 @@
     const n = 5 + Math.floor(r() * 3);
     let base = '', strokes = '';
     for (let i = 0; i < n; i++) { const x = 40 + i * (220 / (n - 1)), y = 76 - Math.sin(Math.PI * i / (n - 1)) * 26 + (r() - .5) * 10; base += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(22 + r() * 16)}"/>`; }
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 9; i++) {
       const x = 36 + r() * 190, y = 46 + r() * 50, w = 30 + r() * 60;
-      strokes += `<path d="M${f(x)} ${f(y)}c${f(w * .3)} ${f(-14 - r() * 10)} ${f(w * .8)} -10 ${f(w)} 2c${f(-w * .2)} 10 ${f(-w * .6)} 8 ${f(-w * .5)} -2" stroke="${i % 3 ? '#ffffff' : '#f1f7fb'}" stroke-width="${f(4 + r() * 6)}" fill="none" stroke-linecap="round" opacity="${i % 3 ? .95 : .75}"/>`;
+      strokes += `<path d="M${f(x)} ${f(y)}c${f(w * .3)} ${f(-14 - r() * 10)} ${f(w * .8)} -10 ${f(w)} 2c${f(-w * .2)} 10 ${f(-w * .6)} 8 ${f(-w * .5)} -2" stroke="${i % 3 ? '#ffffff' : '#f1f7fb'}" stroke-width="${f(10 + r() * 10)}" fill="none" stroke-linecap="round" opacity="${i % 3 ? .9 : .7}"/>`;
     }
-    return svg('0 0 300 130', `<defs>${paint(id, .025, 12)}</defs><g filter="url(#${id})"><g fill="#d9ebf6" transform="translate(4 8)">${base}<rect x="30" y="78" width="230" height="24" rx="12"/></g><g fill="#fdfeff">${base}<rect x="30" y="78" width="230" height="24" rx="12"/></g>${strokes}</g>`, 'aria-hidden="true" overflow="visible"');
+    return svg('0 0 300 130', `<defs>${paint(id, .025, 12)}</defs><g filter="url(#${id})"><g fill="#f4f9fd" opacity=".8">${base}<rect x="30" y="78" width="230" height="24" rx="12"/></g>${strokes}</g>`, 'aria-hidden="true" overflow="visible"');
   }
   function decor() {
     const r = rng(41), g = uid('sk');
     const sky = '<div class="lw-sky"></div>';
-    const spots = [['-3vw', '3vh', '44vw', 80], ['52vw', '7vh', '46vw', 95], ['-6vw', '30vh', '30vw', 70], ['64vw', '33vh', '34vw', 85], ['30vw', '20vh', '22vw', 110], ['40vw', '52vh', '66vw', 120], ['-14vw', '58vh', '44vw', 100]];
+    const spots = [['-4vw', '2vh', '40vw', 80], ['56vw', '5vh', '42vw', 95], ['22vw', '24vh', '26vw', 110], ['-10vw', '42vh', '36vw', 100], ['66vw', '40vh', '40vw', 120]];
     return sky + spots.map(([l, t, w, dur], i) => `<div class="lw-cloud" style="left:${l};top:${t};width:${w};animation-duration:${dur}s;animation-delay:-${i * 13}s">${cloud(r, g + 'c' + i)}</div>`).join('');
   }
   function net() {
@@ -377,5 +377,6 @@
     decor,
     net,
     cocoon,
+    _h: { svg, uid, f, eye, blush, smile, leaf, star, rad, lin, light, dark, rng },
   };
 })();

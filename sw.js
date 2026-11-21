@@ -1,6 +1,6 @@
 // Network-first for our own files (updates show up right away), cache fallback for offline play.
-const CACHE = 'lwg-v1';
-const CORE = ['./', 'index.html', 'art.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
+const CACHE = 'lwg-v2';
+const CORE = ['./', 'index.html', 'art.js', 'art-items.js', 'lessons.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
