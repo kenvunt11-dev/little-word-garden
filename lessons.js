@@ -13,7 +13,7 @@
   const item = k => () => ART.item(k);
 
   /* kind: noun | color | number
-   * name: what Miss Bloom says.  a: "a bee" / "an apple".  alias: words the microphone may hear instead. */
+   * name: what Miss Bloom says.  a: "a bee" / "an apple".  plural: true for eyes/shoes ("Where are the …?").  alias: words the microphone may hear instead. */
   const WORDS = {
     // garden insects
     butterfly: { name: 'butterfly', art: bug('butterfly'), alias: ['butterfly', 'butter fly', 'butterflies', 'butter'] },
@@ -67,13 +67,13 @@
     // my body
     head: { name: 'head', art: item('head'), alias: ['head', 'heads', 'had', 'hed', 'bed', 'ted', 'hid'] },
     hand: { name: 'hand', art: item('hand'), alias: ['hand', 'hands', 'and', 'han', 'end', 'hen', 'hunt'] },
-    eyes: { name: 'eyes', a: 'a pair of eyes', art: item('eyes'), alias: ['eyes', 'eye', 'i', 'ice', 'ayes', 'iris', 'eyes'] },
+    eyes: { name: 'eyes', plural: true, a: 'a pair of eyes', art: item('eyes'), alias: ['eyes', 'eye', 'i', 'ice', 'ayes', 'iris', 'eyes'] },
     nose: { name: 'nose', art: item('nose'), alias: ['nose', 'noses', 'knows', 'no', 'nos', 'rose', 'those'] },
     // clothes
     hat: { name: 'hat', art: item('hat'), alias: ['hat', 'hats', 'had', 'at', 'hot', 'that', 'hut'] },
-    shoes: { name: 'shoes', a: 'a pair of shoes', art: item('shoes'), alias: ['shoes', 'shoe', 'shoos', 'choose', 'juice', 'shoot', 'sues'] },
+    shoes: { name: 'shoes', plural: true, a: 'a pair of shoes', art: item('shoes'), alias: ['shoes', 'shoe', 'shoos', 'choose', 'juice', 'shoot', 'sues'] },
     shirt: { name: 'shirt', art: item('shirt'), alias: ['shirt', 'shirts', 'short', 'shut', 'sure', 'shirty'] },
-    socks: { name: 'socks', a: 'a pair of socks', art: item('socks'), alias: ['socks', 'sock', 'sox', 'sacks', 'sax', 'soaks'] },
+    socks: { name: 'socks', plural: true, a: 'a pair of socks', art: item('socks'), alias: ['socks', 'sock', 'sox', 'sacks', 'sax', 'soaks'] },
   };
 
   /* type 'words' (default) or 'math'.

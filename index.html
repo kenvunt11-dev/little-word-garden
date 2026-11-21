@@ -396,7 +396,7 @@ const P = {
   ask(id) { const w = W(id), n = w.name, k = kindOf(id);
     if (k === 'color') return `Which butterfly is ${n}?`;
     if (k === 'number') return w.n === 1 ? 'Where is one ladybug?' : `Where are ${n} ladybugs?`;
-    return `Where is the ${n}?`; },
+    return `Where ${w.plural ? 'are' : 'is'} the ${n}?`; },
   that(id) { const n = W(id).name, k = kindOf(id);
     if (k === 'color') return `That one is ${n}.`;
     if (k === 'number') return `That's ${n}.`;
