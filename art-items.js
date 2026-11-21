@@ -22,6 +22,7 @@
     + smile(x, +f(y + s * .3), +f(s * .15), m, +f(s * .06));
   const wheel = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#3b3033" ${ol()}/><circle cx="${x}" cy="${y}" r="${f(r * .45)}" fill="#d9d2c8"/>`;
   const V = '-50 -50 100 100';
+  const SKIN = '#f7cfae', HAIR = '#6b3f2a';
 
   const ITEMS = {
     /* ---- fruit ---- */
@@ -157,6 +158,48 @@
       <path d="M-47 22A47 47 0 0 1 47 22M-11 22A11 11 0 0 1 11 22" stroke="${OL}" stroke-width="2" fill="none"/>
       ${[-40, 40].map(x => `<g fill="#fff" ${ol(1.8)}><circle cx="${x - 10}" cy="26" r="9"/><circle cx="${x + 10}" cy="26" r="9"/><circle cx="${x}" cy="20" r="12"/></g><ellipse cx="${x}" cy="28" rx="16" ry="6" fill="#fff"/>`).join('')}
       ${face(-40, 24, 14)}${face(40, 24, 14)}`),
+    /* ---- my body ---- */
+    head: () => svg(V, `${body('M-40 8C-46 -34 -20 -48 0 -48C20 -48 46 -34 40 8Z', HAIR)}
+      ${body(ell(-35, 8, 7, 10), SKIN, .3)}${body(ell(35, 8, 7, 10), SKIN, .3)}
+      ${body(ell(0, 8, 33, 36), SKIN)}
+      <path d="M-34 -2C-38 -34 -14 -44 2 -42C24 -42 40 -30 34 -2C26 -16 14 -20 4 -14C-6 -22 -22 -18 -34 -2Z" fill="${HAIR}" ${ol()}/>
+      <path d="M-2 -42Q2 -54 12 -50Q4 -48 4 -42" fill="${HAIR}" ${ol(1.6)}/>
+      ${face(0, 10, 34)}<path d="M-2 14q2 2.4 4 0" stroke="#c98a6a" stroke-width="1.8" fill="none" stroke-linecap="round"/>`),
+    hand: () => svg(V, `<path d="M36 -44q8 4 10 12M42 -50q10 6 12 16" stroke="#9fd0ee" stroke-width="3" fill="none" stroke-linecap="round"/>
+      ${body('M-24 42C-30 30 -32 16 -30 6L-42 -8Q-50 -18 -42 -22Q-36 -24 -30 -16L-24 -8L-26 -34Q-26 -42 -20 -42Q-14 -42 -14 -34L-14 -14Q-12 -16 -10 -14L-10 -40Q-10 -48 -3 -48Q4 -48 4 -40L4 -14Q6 -16 8 -14L8 -38Q8 -46 14 -46Q20 -46 20 -38L20 -12Q22 -14 24 -12L24 -30Q24 -37 29 -37Q34 -37 34 -30L34 6C34 28 26 38 18 42Z', SKIN)}
+      ${face(4, 14, 30)}`),
+    eyes: () => svg('-52 -40 104 80', `${body('M-48 -14Q0 -38 48 -14V18Q0 38 -48 18Z', SKIN)}
+      <path d="M-34 -20Q-22 -28 -10 -20M10 -20Q22 -28 34 -20" stroke="${HAIR}" stroke-width="4.4" fill="none" stroke-linecap="round"/>
+      ${[-22, 22].map(x => `<ellipse cx="${x}" cy="2" rx="15" ry="12" fill="#fff" ${ol()}/>${eye(x, 2, 9)}
+        <path d="M${x - 15} -1l-5 -4M${x - 12} -7l-3 -5M${x + 15} -1l5 -4M${x + 12} -7l3 -5" stroke="${OL}" stroke-width="2" stroke-linecap="round"/>`).join('')}
+      ${blush(-30, 22, 7, 3.6)}${blush(30, 22, 7, 3.6)}`),
+    nose: () => svg(V, `${body(ell(0, 2, 42, 42), SKIN)}
+      ${body('M-4 -32Q6 -32 9 -6Q22 2 18 16Q12 25 0 22Q-12 25 -18 16Q-22 2 -9 -6Q-14 -32 -4 -32Z', '#f4b896', .5)}
+      <ellipse cx="-7" cy="14" rx="3.6" ry="2.6" fill="#a8604a"/><ellipse cx="7" cy="14" rx="3.6" ry="2.6" fill="#a8604a"/>
+      ${shine('M-2 -24Q2 -16 1 -8')}${blush(-28, 8, 7, 4)}${blush(28, 8, 7, 4)}${smile(0, 32, 7, '#5a2a22', 2)}
+      <path d="${star(-30, -26, 5, 2.2)}" fill="#ffd23f"/><path d="${star(32, -22, 4, 1.8)}" fill="#ffd23f"/>`),
+    /* ---- clothes ---- */
+    hat: () => svg('-56 -46 112 84', `${body(ell(0, 18, 52, 14), '#f2c45a')}
+      ${body('M-28 16Q-30 -32 0 -34Q30 -32 28 16Z', '#f6d06a')}
+      <path d="M-28.6 2Q0 9 28.6 2V12Q0 19 -28.6 12Z" fill="#ec4b3c" ${ol(1.6)}/>
+      ${[0, 72, 144, 216, 288].map(a => `<circle cx="20" cy="2" r="5" fill="#f383b0" ${ol(1.2)} transform="rotate(${a} 20 7) translate(0 0)"/>`).join('')}<circle cx="20" cy="7" r="3.6" fill="#ffd23f" ${ol(1.2)}/>
+      ${face(-4, -14, 26)}`),
+    shoes: () => svg('-56 -40 112 80', [[-27, -2], [27, 4]].map(([x, y]) => `<g transform="translate(${x} ${y}) scale(.9)">
+      ${body('M-24 10V-14Q-24 -22 -16 -22H-2Q4 -22 6 -14L10 -6Q22 -4 26 4Q28 12 22 14H-20Q-24 14 -24 10Z', '#ec4b3c')}
+      <path d="M-26 10H26Q26 20 18 20H-20Q-26 20 -26 10Z" fill="#fffaf0" ${ol()}/>
+      <path d="M-6 -16l8 4M-8 -10l9 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      ${eye(12, 2, 3.4)}${blush(18, 8, 3.4, 2)}${smile(5, 7, 3.4, '#5a2a22', 1.8)}</g>`).join('')),
+    shirt: () => svg(V, `${body('M-16 -38Q0 -30 16 -38L44 -22L34 0L24 -6V40H-24V-6L-34 0L-44 -22Z', '#4b9be3')}
+      <path d="M-16 -38Q0 -24 16 -38" fill="#fff3c4" ${ol(1.8)}/>
+      <path d="M-24 28H24" stroke="#ffd23f" stroke-width="4"/>
+      <path d="${star(18, -12, 6, 2.6)}" fill="#ffd23f" ${ol(1.2)}/>
+      ${face(-2, 6, 30)}`),
+    socks: () => svg('-56 -50 112 100', [[-24, -4, '#f383b0'], [22, 2, '#f383b0']].map(([x, y, c]) => {
+      const d = 'M-12 -40H10V6Q10 12 16 14Q30 18 30 28Q30 40 16 40H-2Q-14 40 -14 28Z', id = uid('sk');
+      return `<g transform="translate(${x} ${y}) scale(.9)"><clipPath id="${id}"><path d="${d}"/></clipPath>${body(d, '#fffaf0')}
+      <g clip-path="url(#${id})" fill="${c}">${[-40, -26, -12].map(s => `<rect x="-20" y="${s}" width="40" height="7"/>`).join('')}<path d="M18 12Q34 18 32 34Q30 44 16 44L14 12Z"/></g>
+      <path d="${d}" fill="none" ${ol()}/>${eye(6, 22, 3.4)}${blush(-4, 28, 3.6, 2.2)}${smile(1, 28, 3.4, '#5a2a22', 1.8)}</g>`;
+    }).join('')),
   };
 
   // n copies of a picture laid out like dice; kind = 'ladybug' or any ITEMS key

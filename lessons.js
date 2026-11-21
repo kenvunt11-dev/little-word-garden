@@ -64,6 +64,16 @@
     moon: { name: 'moon', art: item('moon'), alias: ['moon', 'moons', 'mun', 'noon'] },
     star: { name: 'star', art: item('star'), alias: ['star', 'stars', 'start', 'stop'] },
     rainbow: { name: 'rainbow', art: item('rainbow'), alias: ['rainbow', 'rain bow', 'rain'] },
+    // my body
+    head: { name: 'head', art: item('head'), alias: ['head', 'heads', 'had', 'hed', 'bed', 'ted', 'hid'] },
+    hand: { name: 'hand', art: item('hand'), alias: ['hand', 'hands', 'and', 'han', 'end', 'hen', 'hunt'] },
+    eyes: { name: 'eyes', a: 'a pair of eyes', art: item('eyes'), alias: ['eyes', 'eye', 'i', 'ice', 'ayes', 'iris', 'eyes'] },
+    nose: { name: 'nose', art: item('nose'), alias: ['nose', 'noses', 'knows', 'no', 'nos', 'rose', 'those'] },
+    // clothes
+    hat: { name: 'hat', art: item('hat'), alias: ['hat', 'hats', 'had', 'at', 'hot', 'that', 'hut'] },
+    shoes: { name: 'shoes', a: 'a pair of shoes', art: item('shoes'), alias: ['shoes', 'shoe', 'shoos', 'choose', 'juice', 'shoot', 'sues'] },
+    shirt: { name: 'shirt', art: item('shirt'), alias: ['shirt', 'shirts', 'short', 'shut', 'sure', 'shirty'] },
+    socks: { name: 'socks', a: 'a pair of socks', art: item('socks'), alias: ['socks', 'sock', 'sox', 'sacks', 'sax', 'soaks'] },
   };
 
   /* type 'words' (default) or 'math'.
@@ -81,6 +91,8 @@
     { id: 'minus',   title: 'Take away',      vi: 'Phép trừ',       type: 'math', op: '-', thing: 'duck', sums: [[2, 1], [3, 1], [3, 2], [4, 1], [4, 2], [5, 2]] },
     { id: 'go',      title: 'Things that go', vi: 'Xe cộ',          icon: 'car',       words: ['car', 'bus', 'boat', 'plane'] },
     { id: 'sky',     title: 'In the sky',     vi: 'Bầu trời',       icon: 'rainbow',   words: ['sun', 'moon', 'star', 'rainbow'] },
+    { id: 'body',    title: 'My body',        vi: 'Cơ thể',         icon: 'head',      words: ['head', 'hand', 'eyes', 'nose'] },
+    { id: 'clothes', title: 'Clothes',        vi: 'Quần áo',        icon: 'shirt',     words: ['hat', 'shoes', 'shirt', 'socks'] },
   ];
 
   window.WORDS = WORDS;
