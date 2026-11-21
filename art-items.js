@@ -7,13 +7,13 @@
   'use strict';
   const { svg, uid, f, eye, blush, smile, leaf, star, light, dark } = ART._h;
   const OL = '#4a2f25';
-  const ol = (w = 2.2) => `stroke="${OL}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+  const ol = (w = 1.8) => `stroke="${OL}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
   const ell = (cx, cy, rx, ry) => `M${f(cx - rx)} ${f(cy)}a${f(rx)} ${f(ry)} 0 1 0 ${f(rx * 2)} 0a${f(rx)} ${f(ry)} 0 1 0 ${f(-rx * 2)} 0Z`;
   // flat body with a soft darker edge on the lower-right + outline
   const body = (d, fill, k = 1) => {
     const id = uid('cl');
-    return `<clipPath id="${id}"><path d="${d}"/></clipPath><path d="${d}" fill="${dark(fill, .16)}"/>`
-      + `<g clip-path="url(#${id})"><path d="${d}" fill="${fill}" transform="translate(${f(-5 * k)} ${f(-6 * k)})"/></g><path d="${d}" fill="none" ${ol()}/>`;
+    return `<clipPath id="${id}"><path d="${d}"/></clipPath><path d="${d}" fill="${dark(fill, .14)}"/>`
+      + `<g clip-path="url(#${id})"><path d="${d}" fill="${fill}" transform="translate(${f(-5 * k)} ${f(-6 * k)})"/></g><path d="${d}" fill="none" stroke="${dark(fill, .42)}" stroke-width="1.8" stroke-linejoin="round"/>`;
   };
   const shine = d => `<path d="${d}" stroke="#fff" stroke-width="4.5" fill="none" opacity=".55" stroke-linecap="round"/>`;
   const n1 = v => +(+v).toFixed(1);
@@ -205,18 +205,22 @@
   // n copies of a picture laid out like dice; kind = 'ladybug' or any ITEMS key
   function group(n, kind = 'ladybug', badge = true) {
     const P = { 0: [], 1: [[50, 50, 66]], 2: [[26, 50, 46], [74, 50, 46]], 3: [[50, 28, 42], [26, 72, 42], [74, 72, 42]],
-      4: [[27, 28, 40], [73, 28, 40], [27, 74, 40], [73, 74, 40]], 5: [[23, 24, 34], [77, 24, 34], [50, 50, 34], [23, 78, 34], [77, 78, 34]] }[n] || [];
+      4: [[27, 28, 40], [73, 28, 40], [27, 74, 40], [73, 74, 40]], 5: [[23, 24, 34], [77, 24, 34], [50, 50, 34], [23, 78, 34], [77, 78, 34]] }[n]
+      || Array.from({ length: n }, (_, i) => { const r = i < 5 ? 0 : 1, k = r ? n - 5 : 5, j = r ? i - 5 : i; return [50 + (j - (k - 1) / 2) * 19, 36 + r * 34, 19]; });
     const one = kind === 'ladybug' ? ART.bug('ladybug') : ART.item(kind);
     const pics = P.map(([x, y, s]) => one.replace('<svg ', `<svg x="${f(x - s / 2)}" y="${f(y - s / 2)}" width="${s}" height="${s}" `)).join('');
     return svg('0 0 100 100', pics + (badge ? `<circle cx="89" cy="11" r="10.5" fill="#fff" ${ol(1.8)}/><text x="89" y="16.5" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="16" fill="${OL}">${n}</text>` : ''));
   }
+  const NUMC = ['#9b6bd6', '#f6922b', '#f26b3a', '#e8463a', '#b04fc4', '#7a5cd6', '#3f8fd6', '#2aa6b8', '#3fae5a', '#f6b31f', '#ec4b80'];
   // big numeral with n dots under it (answer cards in maths)
   function numeral(n) {
-    const dots = Array.from({ length: n }, (_, i) => `<circle cx="${f(50 + (i - (n - 1) / 2) * 15)}" cy="86" r="5.5" fill="#f6922b" ${ol(1.4)}/>`).join('');
-    return svg('0 0 100 100', `<text x="50" y="66" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="74" fill="#4b9be3" stroke="${OL}" stroke-width="2.4" paint-order="stroke">${n}</text>${dots}`);
+    const dots = Array.from({ length: n }, (_, i) => { const r = i < 5 ? 0 : 1, k = r ? n - 5 : Math.min(n, 5), j = r ? i - 5 : i; return `<circle cx="${f(50 + (j - (k - 1) / 2) * 13)}" cy="${n > 5 ? 82 + r * 12 : 86}" r="5" fill="#f6922b" stroke="#c96a14" stroke-width="1.2"/>`; }).join('');
+    return svg('0 0 100 100', `<text x="50" y="${n > 5 ? 62 : 66}" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="74" fill="${NUMC[n % NUMC.length]}" stroke="#fff" stroke-width="5" paint-order="stroke">${n}</text>${dots}`);
   }
 
   ART.item = kind => (ITEMS[kind] || ITEMS.star)();
+  ART.addItems = o => { Object.assign(ITEMS, o); ART.items = Object.keys(ITEMS); };
+  ART._i = { body, face, ol, ell, shine, wheel, OL };
   ART.items = Object.keys(ITEMS);
   ART.count = n => group(n);
   ART.group = group;

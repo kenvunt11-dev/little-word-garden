@@ -79,6 +79,25 @@ html,body{margin:0;height:100%;overflow:hidden;background:#4aa6e0;color:var(--in
 .sign{font-size:clamp(44px,9vmin,90px);font-weight:800;color:#fff;-webkit-text-stroke:3px var(--ink);paint-order:stroke;line-height:1;text-shadow:0 5px 0 rgba(74,47,37,.25);animation:cardIn .4s backwards}
 .qmark{font-size:clamp(60px,12vmin,120px);font-weight:800;color:var(--orange);-webkit-text-stroke:3px var(--ink);paint-order:stroke;line-height:1}
 
+/* look & point scene */
+.scenebox{position:relative;flex:none;border:4px solid var(--ink);border-radius:28px;overflow:hidden;box-shadow:0 7px 0 rgba(74,47,37,.2);pointer-events:auto;animation:cardIn .5s backwards}
+.scenebox > svg{position:absolute;inset:0;width:100%;height:100%}
+.sitem{position:absolute;width:23%;aspect-ratio:1;translate:-50% -50%;background:none;border:0;padding:0;cursor:pointer;font:inherit;color:var(--ink);animation:cardIn .5s backwards}
+.sitem > svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 5px 3px rgba(40,30,20,.22))}
+.snum{position:absolute;left:-2%;top:-2%;width:26%;aspect-ratio:1;border-radius:50%;background:#fff;border:3px solid var(--ink);font-weight:800;display:grid;place-items:center;font-size:clamp(13px,2.4vmin,22px);line-height:1}
+.slbl{position:absolute;left:50%;bottom:-6%;transform:translateX(-50%);background:#fff;border:2px solid var(--ink);border-radius:12px;padding:0 10px;font-weight:800;font-size:clamp(14px,2.6vmin,24px);white-space:nowrap;opacity:0;transition:opacity .3s}
+.sitem.seen .slbl{opacity:1}
+.sitem.glow::before{content:"";position:absolute;inset:-10%;border-radius:50%;border:5px dashed var(--gold);animation:spin 8s linear infinite,glow 1s ease-in-out infinite alternate;pointer-events:none}
+.sitem.yay{animation:yay .7s}
+#voiceBtn{left:calc(24px + clamp(60px,9vh,78px))}
+.pg{position:absolute;top:50%;translate:0 -50%;width:clamp(54px,8vmin,74px);height:clamp(54px,8vmin,74px);border-radius:50%;background:var(--cream);border:3px solid var(--ink);box-shadow:0 5px 0 rgba(74,47,37,.2);cursor:pointer;display:grid;place-items:center;padding:0;z-index:2}
+.pg svg{width:50%;height:50%}
+.pg.prev{left:0}.pg.next{right:0}
+.pg:disabled{opacity:.25}
+.dots{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);display:flex;gap:8px}
+.dots i{width:12px;height:12px;border-radius:50%;background:rgba(255,250,241,.6);border:2px solid var(--ink)}
+.dots i.on{background:var(--gold)}
+
 /* floaters (catch game + map butterflies) */
 #floaters{position:absolute;inset:0;z-index:7;pointer-events:none}
 .floater{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;will-change:transform}
@@ -185,6 +204,7 @@ body.map .lesson-only, body.lesson .map-only{display:none !important}
   <div id="bubble"></div>
   <div id="ui">
     <button class="round lesson-only" id="home" aria-label="Back to map"><svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5" fill="none" stroke="#4a2f25" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v9.5h13V10" fill="#f6922b" stroke="#4a2f25" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 19.5v-5h4v5" fill="#fff4c9" stroke="#4a2f25" stroke-width="2"/></svg></button>
+    <button class="round map-only" id="voiceBtn" aria-label="Change Miss Bloom's voice"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#ffd23f" stroke="#4a2f25" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="#4a2f25" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     <button class="round map-only" id="micBtn" aria-label="Microphone on/off"><svg viewBox="0 0 24 24"><rect x="8.5" y="3" width="7" height="11" rx="3.5" fill="#ec4b3c" stroke="#4a2f25" stroke-width="1.8"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" stroke="#4a2f25" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
     <div class="stepbar lesson-only" id="steps"></div>
     <div id="pet" class="map-only" aria-label="My caterpillar"><div id="petArt"><div></div></div><div id="petDots"></div></div>
@@ -201,6 +221,7 @@ body.map .lesson-only, body.lesson .map-only{display:none !important}
 
 <script src="art.js"></script>
 <script src="art-items.js"></script>
+<script src="art-more.js"></script>
 <script src="lessons.js"></script>
 <script>
 (() => {
@@ -214,8 +235,8 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('lwg_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('lwg_' + k, JSON.stringify(v)); } catch (e) {} },
 };
-const NUM = ['zero', 'one', 'two', 'three', 'four', 'five'];
-const PRAISE = ['Great job!', 'Yes! Super!', 'Wonderful!', 'Hooray!', 'You did it!', 'Excellent!', 'Well done!'];
+const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+const PRAISE = ['Yay! You did it!', 'Good job!', 'Wow! Great job!', 'You got it!', 'Hooray!', 'Super!', 'Yes! Well done!'];
 const STAR = '<svg viewBox="-12 -12 24 24"><path d="M0-11L3.2-3.6L11-3.4L4.9 1.6L7 9.4L0 5L-7 9.4L-4.9 1.6L-11-3.4L-3.2-3.6Z" fill="#ffd23f" stroke="#4a2f25" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 const STAR_OFF = STAR.replace('#ffd23f', '#e7dccb');
 const HAND = '<svg viewBox="0 0 40 44"><path d="M14 4c3 0 4 2 4 4v12l2-1c2-1 4 0 5 2l1-1c2-1 4 0 5 2l1-.5c2-1 4 0 4 3v8c0 7-5 11-12 11h-3c-4 0-7-2-9-5L5 27c-1-2 0-4 2-4s3 1 4 2l-1-17c0-2 1-4 4-4z" fill="#fff" stroke="#4a2f25" stroke-width="2.4" stroke-linejoin="round"/></svg>';
@@ -264,37 +285,63 @@ function sfx(type) {
 
 /* ---------- Miss Bloom speaks ---------- */
 let voice = null;
+// soft, friendly voices first; on iPad "(Enhanced)/(Premium)" voices sound much nicer (Settings > Accessibility > Spoken Content > Voices)
+const VOICE_PREF = ['Ava', 'Zoe', 'Allison', 'Samantha', 'Susan', 'Nicky', 'Karen', 'Serena', 'Kate', 'Stephanie', 'Tessa', 'Moira', 'Google US English', 'Microsoft Ava', 'Microsoft Jenny', 'Microsoft Aria', 'Google UK English Female', 'Microsoft Zira'];
+const MALE = /daniel|fred|alex\b|tom\b|aaron|arthur|gordon|rishi|oliver|reed|rocko|eddy|grandpa|ralph|albert|bruce|junior|male|guy|david|mark|george|ryan|james/i;
+const englishVoices = () => ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).filter(v => /^en[-_]/i.test(v.lang));
+function voiceScore(v) {
+  const id = v.name + ' ' + v.voiceURI;
+  let q = /premium/i.test(id) ? 40 : /enhanced|natural|neural|online/i.test(id) ? 30 : 0;
+  const i = VOICE_PREF.findIndex(p => v.name.includes(p)); if (i >= 0) q += 24 - i;
+  if (MALE.test(v.name)) q -= 30; if (/en[-_]US/i.test(v.lang)) q += 2;
+  return q;
+}
+const rankedVoices = () => englishVoices().sort((a, b) => voiceScore(b) - voiceScore(a));
 function pickVoice() {
-  if (!('speechSynthesis' in window)) return;
-  const vs = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
-  const pref = ['Samantha', 'Karen', 'Moira', 'Tessa', 'Google US English', 'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Ava', 'Microsoft Zira', 'Google UK English Female'];
-  for (const p of pref) { const v = vs.find(v => v.name.includes(p)); if (v) { voice = v; return; } }
-  voice = vs.find(v => /female/i.test(v.name)) || vs.find(v => v.lang === 'en-US') || vs[0] || null;
+  const vs = rankedVoices(), saved = store.get('voice', null);
+  voice = (saved && vs.find(v => v.name === saved)) || vs[0] || null;
 }
 if ('speechSynthesis' in window) { speechSynthesis.onvoiceschanged = pickVoice; pickVoice(); }
+$('#voiceBtn').addEventListener('click', () => {
+  unlockAudio();
+  const vs = rankedVoices().slice(0, 8); if (!vs.length) { toast('Máy chưa có giọng tiếng Anh.'); return; }
+  const i = (vs.findIndex(v => v === voice) + 1) % vs.length; voice = vs[i]; store.set('voice', voice.name);
+  toast('Giọng: ' + voice.name + ' (' + (i + 1) + '/' + vs.length + ')');
+  say("Hi friend! I'm Miss Bloom!").catch(() => {});
+});
 
 let bubbleTimer = 0, lastLine = '';
-function say(text, { rate = 0.82, pitch = 1.2, remember = false } = {}) {
+// Miss Bloom talks slowly and warmly: each phrase is spoken separately with a little pause,
+// and exclamations go a bit higher, like a sing-song kids' teacher.
+function say(text, { rate = 0.8, pitch = 1.18, remember = false } = {}) {
   if (remember) lastLine = text;
   return waitFor((done, h) => {
     clearTimeout(bubbleTimer);
-    bubble.textContent = text; bubble.classList.add('show');
+    bubble.textContent = text.replace(/\.\.\./g, '…'); bubble.classList.add('show');
     teacher.classList.add('talking');
-    let timer = 0, fin = false;
+    let timer = 0, gap = 0, fin = false;
     const end = () => {
-      if (fin) return; fin = true; clearTimeout(timer);
+      if (fin) return; fin = true; clearTimeout(timer); clearTimeout(gap);
       teacher.classList.remove('talking');
       bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 4000);
       done();
     };
-    h.cleanup = () => { fin = true; clearTimeout(timer); teacher.classList.remove('talking'); };
+    h.cleanup = () => { fin = true; clearTimeout(timer); clearTimeout(gap); teacher.classList.remove('talking'); };
     if (!('speechSynthesis' in window)) { timer = setTimeout(end, 700 + text.length * 70); return; }
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US'; if (voice) u.voice = voice; u.rate = rate; u.pitch = pitch;
-    u.onend = end; u.onerror = end;
-    timer = setTimeout(end, 2500 + text.length * 110); // safety net (iPad sometimes skips onend)
-    speechSynthesis.speak(u);
+    const parts = text.split(/\.\.\.\s*|(?<=[!?.,])\s+/).map(p => p.trim()).filter(Boolean);
+    let i = 0;
+    const next = () => {
+      if (fin) return;
+      if (i >= parts.length) return end();
+      const p = parts[i], u = new SpeechSynthesisUtterance(p);
+      u.lang = 'en-US'; if (voice) u.voice = voice;
+      u.rate = rate; u.pitch = Math.min(2, pitch + (/!$/.test(p) ? .12 : /\?$/.test(p) ? .08 : 0));
+      u.onend = u.onerror = () => { i++; gap = setTimeout(next, /[.!?…]$/.test(p) ? 280 : 120); };
+      speechSynthesis.speak(u);
+    };
+    timer = setTimeout(end, 3000 + text.length * 120 + parts.length * 300); // safety net (iPad sometimes skips onend)
+    next();
   });
 }
 teacher.addEventListener('click', () => { if (lastLine && !speechSynthesis.speaking) say(lastLine).catch(() => {}); });
@@ -386,26 +433,34 @@ flowers.forEach(fl => drawFlower(fl, false));
 /* ---------- words & phrases ---------- */
 const W = id => WORDS[id];
 const kindOf = id => W(id).kind || 'noun';
-const aOf = id => W(id).a || ('a ' + W(id).name);
+const aOf = id => W(id).a || ((/^[aeiou]/i.test(W(id).name) ? 'an ' : 'a ') + W(id).name);
+const plOf = id => W(id).pl || (W(id).name + 's');
 const plural = (n, word) => n === 1 ? word : word + 's';
+const HOME = {}; LESSONS.forEach(L => (L.words || []).forEach(id => { if (!HOME[id]) HOME[id] = L; }));
+const tplFor = (id, key) => W(id)[key] || (HOME[id] && HOME[id][key]);
+const fill = (t, id) => { const w = W(id), a = aOf(id);
+  return t.replace(/\{name\}/g, w.name).replace(/\{Name\}/g, cap(w.name)).replace(/\{a\}/g, a).replace(/\{A\}/g, cap(a))
+    .replace(/\{pl\}/g, plOf(id)).replace(/\{sound\}/g, w.sound || '').replace(/\s+/g, ' ').trim(); };
 const P = {
-  intro(id) { const w = W(id), n = w.name, k = kindOf(id);
+  intro(id) { const t = tplFor(id, 'intro'); if (t) return fill(t, id);
+    const w = W(id), n = w.name, k = kindOf(id);
     if (k === 'color') return `This butterfly is ${n}. ${cap(n)}!`;
     if (k === 'number') return `${cap(n)}! ${cap(n)} ${plural(w.n, 'ladybug')}.`;
     return `This is ${aOf(id)}. ${cap(n)}!`; },
-  ask(id) { const w = W(id), n = w.name, k = kindOf(id);
+  ask(id) { const t = tplFor(id, 'ask'); if (t) return fill(t, id);
+    const w = W(id), n = w.name, k = kindOf(id);
     if (k === 'color') return `Which butterfly is ${n}?`;
     if (k === 'number') return w.n === 1 ? 'Where is one ladybug?' : `Where are ${n} ladybugs?`;
-    return `Where ${w.plural ? 'are' : 'is'} the ${n}?`; },
+    return `Where ${w.plural ? 'are' : 'is'} the ${n}? Can you find it?`; },
   that(id) { const n = W(id).name, k = kindOf(id);
-    if (k === 'color') return `That one is ${n}.`;
-    if (k === 'number') return `That's ${n}.`;
-    return `That's ${aOf(id)}.`; },
-  catch(id) { const w = W(id), n = w.name, k = kindOf(id);
+    if (k === 'color' || k === 'number') return `Hmm, that's ${n}.`;
+    return `Hmm, that's ${aOf(id).replace(/^my /, 'the ')}.`; },
+  catch(id) { const t = tplFor(id, 'catch'); if (t) return fill(t, id);
+    const w = W(id), n = w.name, k = kindOf(id);
     if (k === 'color') return `Catch the ${n} butterfly!`;
     if (k === 'number') return `Catch ${n} ${plural(w.n, 'ladybug')}!`;
     return `Catch the ${n}!`; },
-  got(id) { const n = W(id).name, k = kindOf(id); return k === 'color' ? `${cap(n)}! A ${n} butterfly!` : `${cap(n)}!`; },
+  got(id) { const w = W(id), k = kindOf(id); return k === 'color' ? `${cap(w.name)}! A ${w.name} butterfly!` : `${cap(w.name)}! ${w.sound || ''}`.trim(); },
 };
 
 /* ---------- stage helpers ---------- */
@@ -515,47 +570,62 @@ function lessonIcon(L) {
   if (L.type === 'math') return ART._h.svg('0 0 100 100', `<svg x="0" y="12" width="58" height="58" viewBox="0 0 100 100">${ART.group(2, L.thing, false).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</svg><text x="74" y="56" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="52" fill="#f6922b" stroke="#4a2f25" stroke-width="2.4" paint-order="stroke">${L.op === '+' ? '+' : '−'}</text><text x="50" y="98" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="26" fill="#4a2f25">${L.op === '+' ? '1+1' : '2−1'}</text>`);
   return W(L.icon || L.words[0]).art();
 }
+const PER = 6; let mapPage = null;
+const ARROW = d => `<svg viewBox="0 0 24 24"><path d="${d}" fill="#f6922b" stroke="#4a2f25" stroke-width="2" stroke-linejoin="round"/></svg>`;
 function layoutMap() {
   const map = $('#map'); map.innerHTML = '';
+  const pages = Math.ceil(LESSONS.length / PER), nextIdx = LESSONS.findIndex(L => !done[L.id]);
+  if (mapPage == null) mapPage = Math.floor(Math.max(0, nextIdx) / PER);
+  mapPage = Math.max(0, Math.min(pages - 1, mapPage));
   const rect = map.getBoundingClientRect(), portrait = innerHeight > innerWidth;
-  const cols = portrait ? 3 : 4, rows = Math.ceil(LESSONS.length / cols);
-  const tw = Math.min(rect.width / cols * .66, rect.height / rows * .74, 150);
-  const pts = LESSONS.map((L, i) => {
-    const r = Math.floor(i / cols), c0 = i % cols, c = r % 2 ? cols - 1 - c0 : c0; // snake path
-    return [((c + .5) / cols) * 100, ((r + .5) / rows) * 100 + (c % 2 ? 4 : -4)];
+  const cols = portrait ? 2 : 3, rows = Math.ceil(PER / cols), padX = 12;
+  const tw = Math.min(rect.width * (1 - padX * 2 / 100) / cols * .62, rect.height / rows * .64, 170);
+  const idxs = LESSONS.map((_, i) => i).slice(mapPage * PER, mapPage * PER + PER);
+  const pts = idxs.map((_, k) => {
+    const r = Math.floor(k / cols), c0 = k % cols, c = r % 2 ? cols - 1 - c0 : c0; // snake path
+    return [padX + ((c + .5) / cols) * (100 - padX * 2), ((r + .5) / rows) * 100 + (c % 2 ? 5 : -5)];
   });
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   path.setAttribute('class', 'path'); path.setAttribute('viewBox', '0 0 100 100'); path.setAttribute('preserveAspectRatio', 'none');
   let d = ''; pts.forEach(([x, y], i) => { d += (i ? 'L' : 'M') + x + ' ' + y; });
   path.innerHTML = `<path d="${d}" fill="none" stroke="#fff4c9" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" opacity=".85"/><path d="${d}" fill="none" stroke="#d9b98a" stroke-width="4" stroke-dasharray="2 14" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
   map.appendChild(path);
-  const nextIdx = LESSONS.findIndex(L => !done[L.id]);
-  LESSONS.forEach((L, i) => {
-    const t = document.createElement('button');
+  idxs.forEach((i, k) => {
+    const L = LESSONS[i], t = document.createElement('button');
     const stars = done[L.id] || 0, unlocked = isUnlocked(i);
     t.className = 'tile' + (stars ? ' done' : '') + (!unlocked ? ' locked' : '') + (i === nextIdx ? ' next' : '');
-    t.style.left = pts[i][0] + '%'; t.style.top = pts[i][1] + '%'; t.style.setProperty('--tw', tw + 'px'); t.style.animationDelay = i * .04 + 's';
-    t.innerHTML = lessonIcon(L) + `<span class="num">${i + 1}</span>` + (stars ? `<span class="stars">${[1, 2, 3].map(k => k <= stars ? STAR : STAR_OFF).join('')}</span>` : '');
+    t.dataset.i = i;
+    t.style.left = pts[k][0] + '%'; t.style.top = pts[k][1] + '%'; t.style.setProperty('--tw', tw + 'px'); t.style.animationDelay = k * .05 + 's';
+    t.innerHTML = lessonIcon(L) + `<span class="num">${i + 1}</span>` + (stars ? `<span class="stars">${[1, 2, 3].map(n => n <= stars ? STAR : STAR_OFF).join('')}</span>` : '');
     t.setAttribute('aria-label', L.title);
     // parents: press and hold a locked lesson for 2 seconds to open it
     let hold = 0;
-    t.addEventListener('pointerdown', () => { hold = setTimeout(() => { hold = -1; done[L.id] = done[L.id] || 0; openLesson(i, true); }, 2000); });
+    t.addEventListener('pointerdown', () => { hold = setTimeout(() => { hold = -1; openLesson(i, true); }, 2000); });
     t.addEventListener('pointerup', () => { if (hold > 0) { clearTimeout(hold); openLesson(i); } hold = 0; });
     t.addEventListener('pointerleave', () => { if (hold > 0) clearTimeout(hold); hold = 0; });
     map.appendChild(t);
   });
+  const prev = document.createElement('button'), next = document.createElement('button');
+  prev.className = 'pg prev'; next.className = 'pg next';
+  prev.innerHTML = ARROW('M16 4L6 12l10 8z'); next.innerHTML = ARROW('M8 4l10 8-10 8z');
+  prev.disabled = mapPage === 0; next.disabled = mapPage === pages - 1;
+  prev.onclick = () => { sfx('pop'); mapPage--; layoutMap(); };
+  next.onclick = () => { sfx('pop'); mapPage++; layoutMap(); };
+  const dots = document.createElement('div'); dots.className = 'dots';
+  dots.innerHTML = Array.from({ length: pages }, (_, p) => `<i class="${p === mapPage ? 'on' : ''}"></i>`).join('');
+  map.append(prev, next, dots);
 }
 function openLesson(i, force = false) {
   unlockAudio();
-  const L = LESSONS[i], tile = $('#map').children[i + 1];
+  const L = LESSONS[i], tile = $('#map').querySelector(`.tile[data-i="${i}"]`);
   if (!force && !isUnlocked(i)) { sfx('boop'); bump(tile, 'no'); say("Let's finish the shiny one first!").catch(() => {}); return; }
   sfx('pop'); runLesson(L);
 }
 function showMap(greet = true) {
-  abortAll(); clearStage(); setMode('map');
+  abortAll(); mapPage = null; clearStage(); setMode('map');
   layoutMap(); renderPet(); spawnMapButterflies();
   lastLine = 'Tap the shiny flower to play!';
-  if (greet) say(pick(['Where shall we go next?', 'Tap the shiny one!', "Let's play!"]), { remember: false }).catch(() => {});
+  if (greet) say(pick(['Where shall we go next?', 'Tap the shiny one!', "Let's play again!"]), { remember: false }).catch(() => {});
 }
 function setMode(m) { document.body.className = m; }
 addEventListener('resize', () => { if (document.body.className === 'map') layoutMap(); });
@@ -600,6 +670,45 @@ async function learnWord(id) {
   await wait(250);
 }
 
+function sizeScene(box) {
+  const sw = stage.clientWidth - parseFloat(getComputedStyle(stage).paddingLeft) - parseFloat(getComputedStyle(stage).paddingRight);
+  const w = Math.min(sw, stage.clientHeight * 400 / 260, 900);
+  box.style.width = w + 'px'; box.style.height = w * 260 / 400 + 'px';
+}
+addEventListener('resize', () => { const b = stage.querySelector('.scenebox'); if (b) sizeScene(b); });
+async function lookAndPoint(L) {
+  clearStage();
+  const box = document.createElement('div'); box.className = 'scenebox';
+  box.innerHTML = ART.scene(L.scene || 'meadow');
+  stage.append(box); sizeScene(box);
+  const SLOTS = L.words.length === 5 ? [[15, 62], [32, 34], [50, 64], [68, 34], [85, 62]] : [[18, 60], [39, 35], [61, 62], [82, 36]];
+  const items = L.words.map((id, i) => {
+    const b = document.createElement('button'); b.className = 'sitem'; b.value = id;
+    b.style.left = SLOTS[i][0] + '%'; b.style.top = SLOTS[i][1] + '%'; b.style.animationDelay = (.2 + i * .12) + 's';
+    b.innerHTML = W(id).art() + (kindOf(id) === 'number' ? '' : `<span class="snum">${i + 1}</span>`) + `<span class="slbl">${W(id).name}</span>`;
+    box.append(b); return b;
+  });
+  await say(pick(["Ooh, look!... Let's listen and point!", "Look!... Let's point and say!"]));
+  for (const [i, id] of L.words.entries()) {
+    const b = items[i]; b.classList.add('glow');
+    await say(P.intro(id), { remember: true });
+    let t = await tapOrTimeout([b], 6000);
+    if (!t) { await say(`Can you point to the ${W(id).name}?... Tap it!`); t = await tapOrTimeout([b], 7000); }
+    b.classList.remove('glow'); b.classList.add('seen'); sfx('pop'); bump(b, 'yay');
+    const p = centerOf(b); sparkle(p.x, p.y, 8);
+    await say(`${cap(W(id).name)}!`, { rate: .7 });
+    await wait(200);
+  }
+  // free play: tap any picture to hear it again
+  await say('Now you!... Tap and listen!');
+  const until = Date.now() + 6000;
+  while (Date.now() < until) {
+    const b = await tapOrTimeout(items, until - Date.now());
+    if (!b) break;
+    sfx('pop'); bump(b, 'yay'); await say(`${cap(W(b.value).name)}!`, { rate: .7 });
+  }
+}
+
 async function findWord(target, pool) {
   clearStage();
   const ids = optionsFor(target, pool);
@@ -618,7 +727,7 @@ async function findWord(target, pool) {
     }
     sfx('boop'); bump(c, 'no'); stats.miss++; wrong++;
     if (wrong >= 2) cards.find(o => o.value === target).classList.add('hint');
-    await say(`${P.that(c.value)} ${P.ask(target)}`);
+    await say(`${P.that(c.value)} Let's try again! ${P.ask(target)}`);
   }
 }
 
@@ -645,7 +754,7 @@ async function catchGame(targets, pool, { label = id => W(id).art(), prompt = id
         break;
       }
       sfx('boop'); wiggle(fl); stats.miss++;
-      await say(`${typeof fl.value === 'string' && WORDS[fl.value] ? P.that(fl.value) : 'Oops!'} ${prompt(target)}`);
+      await say(`${typeof fl.value === 'string' && WORDS[fl.value] ? P.that(fl.value) : 'Oops!'} Try again! ${prompt(target)}`);
     }
   }
   clearFloaters();
@@ -664,19 +773,19 @@ async function speakIt(question, aliases, answerLine, cardEl) {
   } else {
     $('#listen').classList.add('show'); await wait(2800); $('#listen').classList.remove('show');
   }
-  if (ok) { sfx('ding'); bump(cardEl, 'yay'); cheer(); sprout(); await say(`${pick(['Wow!', 'Super!', 'Yes!'])} Great talking!`); }
+  if (ok) { sfx('ding'); bump(cardEl, 'yay'); cheer(); sprout(); await say(`${pick(['Wow!', 'Yay!', 'Yes!'])} I heard you! Great talking!`); }
   else { bump(cardEl, 'yay'); await say(answerLine); }
 }
 
 async function runWords(L) {
   const words = L.words, review = prevWords(L).filter(id => !words.includes(id)), pool = [...words, ...review];
-  await say(`${pick(['Hello!', 'Hi!', 'Yay!'])} Today: ${L.title}!`);
-  setStep(1); for (const id of words) await learnWord(id);
+  await say(`Hi friend!... Today we're learning... ${L.title}! Let's go!`);
+  setStep(1); await lookAndPoint(L);
   setStep(2); for (const id of shuffle(pool)) await findWord(id, pool);
   setStep(3); await catchGame(words, pool);
   setStep(4);
   for (const id of shuffle(words).slice(0, 2)) {
-    await speakIt(`Can you say... ${W(id).name}?`, W(id).alias || [W(id).name], `${cap(W(id).name)}! Good job!`, makeCard(W(id).art(), { size: 'l', label: W(id).name }));
+    await speakIt(`Can you say ${W(id).name}?... ${cap(W(id).name)}.`, W(id).alias || [W(id).name], `${cap(W(id).name)}! Good talking!`, makeCard(W(id).art(), { size: 'l', label: W(id).name }));
   }
 }
 
@@ -691,7 +800,7 @@ async function runMath(L) {
     const q = ans == null ? (() => { const d = makeCard('<div class="qmark">?</div>', { size: 's' }); return d; })() : makeCard(group(ans), { size: 's' });
     return row(makeCard(group(s[0]), { size: 's' }), sign(plus ? '+' : '−'), makeCard(group(s[1]), { size: 's' }), sign('='), q);
   };
-  await say(plus ? "Let's add! Count with me!" : "Let's take away! Count with me!");
+  await say(plus ? "Hi friend!... Let's add!... Count with me!" : "Hi friend!... Let's take away!... Count with me!");
 
   // 1 learn: two worked examples, built up piece by piece
   setStep(1);
@@ -785,7 +894,7 @@ async function reward(L) {
   stage.append(c);
   sfx('tada'); cheer();
   setTimeout(() => { const p = centerOf(c); sparkle(p.x, p.y, 24); }, 300);
-  await say(`Hooray! You finished ${L.title}! Here is your sticker!`);
+  await say(`Yay! You did it!... You finished ${L.title}! Here's your sticker!`);
   if (first) {
     progress++; store.set('progress', progress);
     if (progress >= PET_MAX) {
@@ -806,8 +915,8 @@ $('#play').addEventListener('click', async () => {
   $('#start').remove();
   showMap(false);
   try {
-    await say("Hi! I'm Miss Bloom!");
-    await say(Object.keys(done).length ? 'Welcome back! Tap the shiny one!' : "Let's learn English! Tap the shiny one!", { remember: true });
+    await say("Hi friend! I'm Miss Bloom!");
+    await say(Object.keys(done).length ? "I missed you!... Tap the shiny one!" : "Are you ready to learn?... Let's go! Tap the shiny one!", { remember: true });
   } catch (e) {}
 });
 // test hook (used by the automatic checker only)

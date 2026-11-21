@@ -4,22 +4,34 @@ English for little ones (4+), made for iPad (web app, add to Home Screen).
 Miss Bloom, a flower-fairy teacher, guides the child through 12 short lessons on a garden map.
 
 ## Lessons (`lessons.js`)
-1 Garden friends · 2 Colors · 3 Yummy fruit · 4 Numbers 1–5 · 5 My pets · 6 Little bugs ·
-7 Add it up (+) · 8 On the farm · 9 Toy box · 10 Take away (−) · 11 Things that go · 12 In the sky
+24 lessons following the topic order of the *English for Everyone Junior* beginner course
+(own pictures and wording, adapted for age 4: 4 words + 1 sentence pattern each):
+1 Hello, friends · 2 My school things · 3 Colors · 4 Numbers 1–5 · 5 At the zoo · 6 My family ·
+7 My toys · 8 Add it up (+) · 9 Feelings · 10 My pets · 11 My body · 12 In the garden ·
+13 In town · 14 My home · 15 Take away (−) · 16 On the farm · 17 Yummy fruit · 18 Vegetables ·
+19 At the toy shop · 20 My clothes · 21 At the beach · 22 Lunchtime · 23 Numbers 6–10 · 24 Good night
 
-Every lesson (about 5 minutes) has the same 5 steps:
-1. **Learn** – meet each word (tap to hear it)
-2. **Find** – "Where is the apple?" tap the right card (2 words from the last lesson come back for review)
+Every lesson (about 5–6 minutes) has the same 5 steps:
+1. **Look & point** – a picture scene with numbered things; Miss Bloom says the sentence pattern
+   ("What's that? It's a lion! Roar!"), the child taps each one
+2. **Find** – "Where is the lion? Can you find it?" tap the right card (2 words from the last lesson come back)
 3. **Catch** – tap the right picture flying in the sky
-4. **Say it** – the child says the word (microphone optional)
-5. **Sticker** – 1–3 stars, the caterpillar grows; every 4 new lessons it becomes a butterfly on the map
+4. **Say it** – "Can you say lion?" (microphone optional)
+5. **Sticker** – 1–3 stars; the caterpillar grows, every 4 new lessons it becomes a butterfly on the map
 
-No "wrong" screen: a wrong tap just wiggles and Miss Bloom asks again; after 2 tries the answer glows.
-Tap Miss Bloom to hear the question again. Lessons unlock one by one.
-**Parents:** press and hold a locked lesson for 2 seconds to open it. The mic button (map, top-left) turns speaking practice on/off.
+No "wrong" screen: a wrong tap wiggles, Miss Bloom says "Let's try again!"; after 2 tries the answer glows.
+Tap Miss Bloom to hear the question again. The map has 4 pages of 6 lessons (arrows left/right).
+
+**Parents**
+- Press and hold a locked lesson for 2 seconds to open it.
+- Mic button (map, top-left): speaking practice on/off.
+- Speaker button: try Miss Bloom's voices one by one; the app remembers the choice.
+- For the softest voice on iPad: Settings → Accessibility → Spoken Content → Voices → English →
+  download **Ava (Enhanced/Premium)** or **Samantha (Enhanced)**, then pick it with the speaker button.
 
 ## Add a lesson
-In `lessons.js`: add the words to `WORDS` (picture from `ART.item(...)`), then one line in `LESSONS`.
+In `lessons.js`: add the words to `WORDS` (picture from `ART.item(...)`), then one line in `LESSONS`
+with a sentence pattern, e.g. `intro: "It's {a}. {sound}"` and a `scene`.
 Maths lessons use `type: 'math'`, `op: '+'` or `'-'`, a `thing` to count, and `sums` (answers 1–5).
 
 ## Files
@@ -27,6 +39,7 @@ Maths lessons use `type: 'math'`, `op: '+'` or `'-'`, a `thing` to count, and `s
 - `lessons.js` – words + lesson list (edit this)
 - `art.js` – Miss Bloom, insects, garden, sky (inline SVG)
 - `art-items.js` – word pictures: fruit, pets, farm, toys, vehicles, sky, counting groups, numerals
+- `art-more.js` – people, feelings, body, school, zoo, home, vegetables, clothes, beach, food + scene backgrounds
 - `manifest.webmanifest`, `sw.js`, `icons/` – install as an app, works offline
 
 ## Run locally
